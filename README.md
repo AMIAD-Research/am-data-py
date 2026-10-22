@@ -3,7 +3,7 @@
 This library provides a standardized way to organize, access, and manipulate corpora, making it easier to integrate with PyTorch-based pipelines.
 
 
-## 📁 Corpus Structure
+## Corpus Structure
 
 The library assumes a **common format** for all corpora. Each corpus must follow this directory structure:
 
@@ -29,7 +29,7 @@ corpus_root/
 
 ---
 
-## 🔧 Core Features
+## Core Features
 
 ### 1. **Corpus Object**
 - The `Corpus` class provides **direct access** to all elements of a corpus:
@@ -58,7 +58,7 @@ The library includes the following objects to seamlessly use the corpus format w
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 ```bash
@@ -70,8 +70,7 @@ pip install am-data-py
 Basic usage examples are provided in the `examples`directory.
 
 
----
-
+--
 ## 📜 License
 
 This project is licensed under the **CECILL-C** license.
