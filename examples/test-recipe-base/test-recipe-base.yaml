@@ -1,0 +1,112 @@
+corpus_directory: ???
+
+DummyCorpus:
+  _target_: amdata.corpus.CorpusBase
+  implementation:
+    _target_: amdata.corpus.CorpusImplementationPandas
+  directory: ${corpus_directory}/dummy
+  list_filename: ${corpus_directory}/dummy/list/dummy.lst
+  data_output:
+    id: str
+    audio_path: str
+    class_binary: str
+    class_ternary: str
+    audio:
+      _target_: amdata.media.audio.AudioRandomBlock
+      param_template:
+        file_suffix: audio_path
+      file_prefix: ${corpus_directory}/dummy
+    class_binary_id:
+      _target_: amdata.mapper.mapper.LabelToIndexMapper
+      labels: ["CLASS_01", "CLASS_02"]
+      param_template:
+        label: class_binary
+    class_ternary_id:
+      _target_: amdata.mapper.mapper.LabelToIndexMapper
+      labels: ["CLASS_01", "CLASS_02", "CLASS_03"]
+      param_template:
+        label: class_ternary
+
+DummyCorpus_dataset:
+  _target_: amdata.dataset.DatasetBase
+  corpus: ${DummyCorpus}
+  item_output:
+    audio:
+      data_key: audio.signal
+      type: torch.Tensor
+      dtype: torch.float16
+    audio-length:
+      data_key: audio.n_sample
+      type: int
+    audio-sample-rate:
+      data_key: audio.sample_rate
+      type: int
+    audio-duration:
+      data_key: audio.duration
+      type: float
+    id:
+      data_key: id
+      type: str
+    class-binary-encoded:
+      data_key: class_binary_id
+      type: int
+    class-ternary-encoded:
+      data_key: class_ternary_id
+      type: int
+
+datamodule:
+  _target_: amdata.dataset.module.DataModule
+  
+  train_dataset_cfg: ${DummyCorpus_dataset}
+  val_dataset_cfg: ${DummyCorpus_dataset}
+  test_dataset_cfg: ${DummyCorpus_dataset}
+  
+  train_dataloader_cfg:
+    batch_size: 32
+    drop_last: True # True for train - False for test (keep all data)
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+  val_dataloader_cfg:
+    batch_size: 32
+    drop_last: False
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+  test_dataloader_cfg:
+    batch_size: 32
+    drop_last: False
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+
+  collate_fn_cfg: model.DummyModel.collate_fn
+  
+  padding:
+    audio: 0
+
+trainer:
+  _target_: lightning.pytorch.trainer.trainer.Trainer
+  use_distributed_sampler: false
+  accelerator: gpu
+  devices: 1
+  num_nodes: 1
+  min_epochs: 1
+  val_check_interval: 1.0
+  limit_val_batches: 50
+  limit_train_batches: 10000000
+  precision: "16-mixed"
+  max_epochs: 5
+  callbacks:
+  - _target_: lightning_callbacks.InferenceTimerCallback
+  - _target_: lightning_callbacks.WritePredictionsCSVCallback
+    writer: 
+      _target_: writer.BatchDictCSVWriter
+      output_directory: ./inference_dummy
+
+model:
+  _target_: model.DummyModel
+

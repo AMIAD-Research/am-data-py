@@ -1,0 +1,141 @@
+corpus_directory: ???
+
+DummyCorpus:
+  _target_: amdata.corpus.CorpusBase
+  implementation:
+    _target_: amdata.corpus.CorpusImplementationPandas
+  directory: ${corpus_directory}/dummysampler
+  list_filename: ${corpus_directory}/dummysampler/list/dummy.lst
+  data_output:
+    id: str
+    audio_path: str
+    speaker: str
+    language: str
+    audio:
+      _target_: amdata.media.audio.AudioRandomBlock
+      param_template:
+        file_suffix: audio_path
+      file_prefix: ${corpus_directory}/dummysampler
+    language_id:
+      _target_: amdata.mapper.mapper.LabelToIndexMapper
+      labels: ["language_0", "language_1", "language_2"]
+      param_template:
+        label: language
+    speaker_id:
+      _target_: amdata.mapper.mapper.LabelToIndexMapper
+      labels: ['speaker_0', 'speaker_1', 'speaker_2', 'speaker_3', 'speaker_4', 'speaker_5', 'speaker_6', 'speaker_7', 'speaker_8', 'speaker_9', 'speaker_10', 'speaker_11', 'speaker_12', 'speaker_13', 'speaker_14', 'speaker_15', 'speaker_16', 'speaker_17', 'speaker_18', 'speaker_19', 'speaker_20', 'speaker_21', 'speaker_22', 'speaker_23', 'speaker_24', 'speaker_25', 'speaker_26', 'speaker_27', 'speaker_28', 'speaker_29']
+      param_template:
+        label: speaker
+
+
+DummyCorpus_dataset:
+  _target_: amdata.dataset.DatasetBase
+  corpus: ${DummyCorpus}
+  item_output:
+    audio:
+      data_key: audio.signal
+      type: torch.Tensor
+      dtype: torch.float16
+    audio-length:
+      data_key: audio.n_sample
+      type: int
+    audio-sample-rate:
+      data_key: audio.sample_rate
+      type: int
+    audio-duration:
+      data_key: audio.duration
+      type: float
+    id:
+      data_key: id
+      type: str
+    language-encoded:
+      data_key: language_id
+      type: int
+    speaker:
+      data_key: speaker
+      type: str
+    speaker-encoded:
+      data_key: speaker_id
+      type: int
+
+datamodule:
+  _target_: amdata.dataset.module.DataModule
+
+  train_dataset_cfg: ${DummyCorpus_dataset}
+  val_dataset_cfg: ${DummyCorpus_dataset}
+  test_dataset_cfg: ${DummyCorpus_dataset}
+
+  train_dataloader_cfg:
+    drop_last: True # True for train - False for test (keep all data)
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+  val_dataloader_cfg:
+    drop_last: False
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+  test_dataloader_cfg:
+    drop_last: False
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+  train_sampler_cfg:
+    _target_: amdata.dataset.sampler.DomainBalancedBatchSampler
+    domain_ids: speaker
+    lang_ids: language
+    corpus_ids: speaker
+    batch_size: 9
+    domain_temperature: 0.0
+    lang_temperature: 0.5
+    drop_last: true
+
+  val_sampler_cfg:
+    _target_: amdata.dataset.sampler.DomainBalancedBatchSampler
+    domain_ids: speaker
+    lang_ids: language
+    corpus_ids: speaker
+    batch_size: 9
+    domain_temperature: 0.0
+    lang_temperature: 0.5
+    drop_last: true
+
+  test_sampler_cfg:
+    _target_: amdata.dataset.sampler.CorpusLanguageBalancedSampler
+    corpus_ids: speaker
+    lang_ids: language
+    corpus_temperature: 0.5
+    lang_temperature: 0.5
+    seed: 0
+    drop_last: false
+
+  collate_fn_cfg: model.DummyModel.collate_fn
+
+  padding:
+    audio: 0
+
+trainer:
+  _target_: lightning.pytorch.trainer.trainer.Trainer
+  use_distributed_sampler: false
+  accelerator: gpu
+  devices: 4
+  num_nodes: 1
+  min_epochs: 1
+  val_check_interval: 1.0
+  limit_val_batches: 50
+  limit_train_batches: 10000000
+  precision: "16-mixed"
+  max_epochs: 5
+  callbacks:
+  - _target_: lightning_callbacks.InferenceTimerCallback
+  - _target_: lightning_callbacks.WritePredictionsCSVCallback
+    writer: 
+      _target_: writer.BatchDictCSVWriter
+      output_directory: ./inference_dummy
+
+model:
+  _target_: model.DummyModel
+

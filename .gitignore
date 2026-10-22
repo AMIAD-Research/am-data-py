@@ -1,0 +1,10 @@
+*.pyc
+amdata.egg-info/dependency_links.txt
+amdata.egg-info/PKG-INFO
+amdata.egg-info/SOURCES.txt
+amdata.egg-info/top_level.txt
+*/lightning_logs/*
+*.ckpt
+events.*
+hparams.yaml
+*.csv
