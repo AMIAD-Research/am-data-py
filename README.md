@@ -71,7 +71,7 @@ Basic usage examples are provided in the `examples`directory.
 
 
 --
-## 📜 License
+##  License
 
 This project is licensed under the **CECILL-C** license.
 For more details, see the [LICENSE](LICENSE) file or visit [CECILL-C official page](https://cecill.info/licences/Licence_CECILL-C_V1-en.html).
